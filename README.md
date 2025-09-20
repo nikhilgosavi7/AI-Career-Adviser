@@ -3,7 +3,6 @@ An intelligent web application that guides students and professionals to their i
 
 ✨ Overview
 Navigating the world of careers can be overwhelming. AI Career Adviser simplifies this journey by providing a clear, interactive, and personalized roadmap. By analyzing a user's education level, chosen field, and unique skills, our AI delivers tailored career suggestions, complete with salary expectations and a step-by-step pathway to success in the Indian job market.
-
 🎯 Key Features
 🎓 Education-Based Paths: Separate guidance for students after their 10th and 12th standards.
 
@@ -35,7 +34,7 @@ Getting started is as simple as it gets!
 
 Clone the repository:
 
-git clone (https://github.com/nikhilgosavi7/AI-Career-Adviser/edit/main/README.md)
+git clone https://github.com/nikhilgosavi7/AI-Career-Adviser
 
 Open the file:
 Navigate to the project directory and open the voyage_ai.html file in your favorite web browser.
