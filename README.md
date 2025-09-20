@@ -35,7 +35,7 @@ Getting started is as simple as it gets!
 
 Clone the repository:
 
-git clone [https://github.com/your-username/ai-career-adviser.git](https://github.com/your-username/ai-career-adviser.git)
+git clone (https://github.com/nikhilgosavi7/AI-Career-Adviser/edit/main/README.md)
 
 Open the file:
 Navigate to the project directory and open the voyage_ai.html file in your favorite web browser.
@@ -44,7 +44,7 @@ Run the Chatbot (Optional):
 
 To use the AI chatbot, you need to have your local n8n workflow active.
 
-Make sure your n8n instance is running and the webhook URL is the same as in the code (http://localhost:5678/...).
+Make sure your n8n instance is running and the webhook URL is the same as in the code(https://aicareerai.netlify.app/)
 
 👤 Meet the Team
 This project was brought to life by a dedicated team of innovators:
