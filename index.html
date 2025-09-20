@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Career Adviser</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Using Google Fonts for a modern look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Main container styling */
+        .container-card {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 800px;
+            margin: 2rem auto;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Styling for inner cards */
+        .section-card {
+            background-color: #f8fafc;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.3s ease; /* Animation for cards */
+        }
+        .section-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Gradient button styles */
+        .btn-blue-gradient {
+            background: linear-gradient(to right, #3b82f6, #60a5fa);
+            color: white;
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-blue-gradient:hover {
+            background: linear-gradient(to right, #60a5fa, #3b82f6);
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Loading spinner animation */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Pop-up message box for alerts */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ef4444;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .message-box.show { opacity: 1; }
+
+        /* Hover effects for job recommendation cards */
+        .job-card {
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Floating Chatbot Styles */
+        #chat-icon {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(to right, #3b82f6, #60a5fa);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: pulse 2s infinite; /* Pulsing animation for attention */
+        }
+        #chat-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            animation: none; /* Stop pulsing on hover */
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        #chat-container {
+            position: fixed;
+            bottom: 7rem;
+            right: 2rem;
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            z-index: 998;
+            transform: scale(0.95) translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        #chat-container.show {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+        #chat-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 flex items-center justify-center">
+
+    <!-- Main application container -->
+    <div id="main-container" class="container-card">
+
+        <!-- Navigation Bar: Home and About links -->
+        <nav class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800">AI Career Adviser</h1>
+            <div class="space-x-4">
+                <button id="home-btn" class="text-blue-600 font-semibold hover:underline flex items-center">
+                    <i class="fas fa-home mr-2"></i>Home
+                </button>
+                <button id="about-btn" class="text-blue-600 font-semibold hover:underline flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>About
+                </button>
+            </div>
+        </nav>
+
+        <!-- Header: Title and subtitle of the app -->
+        <header id="header" class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">Discover Your Career Path</h1>
+            <p class="text-gray-500 mt-2">Our AI analyzes your skills and interests to recommend personalized career paths.</p>
+        </header>
+        
+        <!-- About Section: Information about the app, founder, and team -->
+        <section id="about-section" class="hidden">
+            <div class="p-6 bg-white rounded-xl shadow-lg border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">About this Application</h2>
+                <p class="text-gray-600 mb-4">This AI Career Adviser helps you explore career paths based on your academic level, interests, and skills. Get personalized recommendations and guidance for your dream career in India.</p>
+                
+                <!-- Founder Details -->
+                <div class="mt-6 border-t border-gray-200 pt-6">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Founder Details</h3>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li><strong>Name:</strong> Nikhil Gosavi</li>
+                        <li><strong>Instagram:</strong> <a href="https://www.instagram.com/nikhil_gosavi7/?__pwa=1#" class="text-blue-600 hover:underline"><i class="fab fa-instagram mr-2"></i>nikhil_gosavi7</a></li>
+                        <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/nikhil-gosavi-548930319/" class="text-blue-600 hover:underline"><i class="fab fa-linkedin-in mr-2"></i>nikhil-gosavi-548930319</a></li>
+                        <li><strong>GitHub:</strong> <a href="https://github.com/nikhilgosavi7" class="text-blue-600 hover:underline"><i class="fab fa-github mr-2"></i>nikhilgosavi7</a></li>
+                        <li><strong>Phone:</strong> <a href="tel:7350005785" class="text-blue-600 hover:underline"><i class="fas fa-phone mr-2"></i>7350005785</a></li>
+                    </ul>
+                </div>
+
+                <!-- Team Members -->
+                <div class="mt-6 border-t border-gray-200 pt-6">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Team Members</h3>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>Jagruti Kale</li>
+                        <li>Tanvi Patil</li>
+                        <li>Yuvraj</li>
+                        <li>Ankit Singh</li>
+                    </ul>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <button id="about-back-btn" class="btn-blue-gradient py-3 px-8 rounded-full font-semibold">Back</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 1: User selects their education level (10th or 12th) -->
+        <section id="education-section">
+            <div class="p-6 bg-white rounded-xl shadow-lg border border-gray-200 text-center">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">What is your current education level?</h2>
+                <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 justify-center mt-6">
+                    <button data-education="after10th" class="education-btn btn-blue-gradient py-3 px-8 rounded-full font-semibold">After 10th Standard</button>
+                    <button data-education="after12th" class="education-btn btn-blue-gradient py-3 px-8 rounded-full font-semibold">After 12th Standard</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: User chooses a degree or course -->
+        <section id="degree-section" class="hidden">
+            <div class="p-6 bg-white rounded-xl shadow-lg border border-gray-200 text-center">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Choose a Degree/Course</h2>
+                <div id="degree-buttons" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
+            </div>
+        </section>
+
+        <!-- Section 3: User chooses a specialization -->
+        <section id="specialization-section" class="hidden">
+            <div class="p-6 bg-white rounded-xl shadow-lg border border-gray-200 text-center">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Choose Your Specialization</h2>
+                <div id="specialization-buttons" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6"></div>
+                <div class="mt-6 text-center">
+                    <button id="spec-back-btn" class="btn-blue-gradient py-3 px-8 rounded-full font-semibold">Back</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: User inputs personal preferences and skills -->
+        <section id="input-section" class="hidden">
+            <div class="p-6 bg-white rounded-xl shadow-lg border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Personalize Your Profile</h2>
+                
+                <!-- Text area for user to describe their ideal career -->
+                <div class="mb-8">
+                    <label for="user-wants" class="block text-lg font-medium text-gray-700 mb-2">In your own words, what do you want in a career?</label>
+                    <p class="text-sm text-gray-500 mb-3">This helps our AI understand your unique aspirations.</p>
+                    <textarea id="user-wants" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., 'A job with creativity and teamwork', 'Good work-life balance'"></textarea>
+                </div>
+                <hr class="my-6 border-gray-200">
+                
+                <!-- Checkboxes for skill selection -->
+                <h3 class="text-lg font-medium text-gray-700 mb-4">Select the skills you have or are interested in:</h3>
+                <div id="skills-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+                <div class="mt-8 text-center">
+                    <button id="get-recommendations-btn" class="btn-blue-gradient py-3 px-8 rounded-full font-semibold">Get AI Career Recommendations</button>
+                </div>
+                <div class="mt-4 text-center">
+                    <button id="skills-back-btn" class="btn-blue-gradient py-3 px-8 rounded-full font-semibold">Back</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Spinner: Shown while AI is "thinking" -->
+        <div id="loading-spinner" class="hidden flex justify-center items-center py-10">
+            <div class="spinner"></div>
+            <p class="text-gray-500 ml-4 font-medium">Analyzing your profile...</p>
+        </div>
+
+        <!-- Section 5: Displays summary of recommended career paths -->
+        <section id="summary-results-section" class="hidden">
+            <div class="section-card">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Recommended Career Paths</h3>
+                <p class="text-gray-600 mb-4">Here are some career paths that match your skills. Click one to learn more!</p>
+                <div id="career-path-cards" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </div>
+            <div class="mt-6 text-center">
+                <button id="start-over-btn" class="btn-blue-gradient py-3 px-8 rounded-full font-semibold">Start Over</button>
+            </div>
+        </section>
+
+        <!-- Section 6: Displays detailed information about a selected job -->
+        <section id="detailed-job-section" class="hidden">
+            <div class="p-6 bg-white rounded-xl shadow-lg border border-gray-200">
+                <h2 id="job-title" class="text-3xl font-bold text-gray-800 mb-2"></h2>
+                <p id="job-salary" class="text-lg text-gray-500 mb-6"></p>
+                
+                <div class="section-card">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">How to Join & Get This Job</h3>
+                    <p id="how-to-join" class="text-gray-600 leading-relaxed"></p>
+                </div>
+                
+                <div class="section-card">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Career Pathway</h3>
+                    <div id="career-pathway-steps" class="flex flex-col items-start md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4 mt-4"></div>
+                </div>
+                
+                <div class="section-card">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Preferred Skills</h3>
+                    <ul id="preferred-skills-list" class="list-disc list-inside mt-4 text-gray-600 space-y-2"></ul>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <button id="back-btn" class="btn-blue-gradient py-3 px-8 rounded-full font-semibold">Back to Recommendations</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- AI Chatbot Section -->
+    <div id="chat-icon">
+        <i class="fas fa-robot"></i>
+    </div>
+    <div id="chat-container">
+        <!-- The chatbot iframe will be loaded here -->
+    </div>
+    
+    <!-- Message Box: For showing errors or info to the user -->
+    <div id="message-box" class="message-box"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element Selection ---
+            const sections = {
+                education: document.getElementById('education-section'),
+                degree: document.getElementById('degree-section'),
+                specialization: document.getElementById('specialization-section'),
+                input: document.getElementById('input-section'),
+                loading: document.getElementById('loading-spinner'),
+                summary: document.getElementById('summary-results-section'),
+                detailed: document.getElementById('detailed-job-section'),
+                about: document.getElementById('about-section'),
+                header: document.getElementById('header')
+            };
+
+            const buttons = {
+                home: document.getElementById('home-btn'),
+                about: document.getElementById('about-btn'),
+                aboutBack: document.getElementById('about-back-btn'),
+                education: document.querySelectorAll('.education-btn'),
+                specBack: document.getElementById('spec-back-btn'),
+                skillsBack: document.getElementById('skills-back-btn'),
+                getRecommendations: document.getElementById('get-recommendations-btn'),
+                startOver: document.getElementById('start-over-btn'),
+                backToSummary: document.getElementById('back-btn')
+            };
+
+            const containers = {
+                degreeButtons: document.getElementById('degree-buttons'),
+                specializationButtons: document.getElementById('specialization-buttons'),
+                skills: document.getElementById('skills-container'),
+                careerPathCards: document.getElementById('career-path-cards')
+            };
+
+            const detailedView = {
+                title: document.getElementById('job-title'),
+                salary: document.getElementById('job-salary'),
+                howToJoin: document.getElementById('how-to-join'),
+                pathway: document.getElementById('career-pathway-steps'),
+                skills: document.getElementById('preferred-skills-list')
+            };
+
+            const messageBox = document.getElementById('message-box');
+            
+            // Chatbot elements
+            const chatIcon = document.getElementById('chat-icon');
+            const chatContainer = document.getElementById('chat-container');
+
+            // --- State Variables ---
+            let careerPathType = ''; // 'after10th' or 'after12th'
+            let selectedDegree = '';
+            let selectedSpecialization = '';
+            let isChatbotLoaded = false;
+
+            // --- Mock Data: Simulates a database of career information ---
+            const mockData = {
+                'after10th': {
+                    'Diploma': {
+                        specializations: { 'Engineering': { salary: '₹3-7 LPA', howToJoin: 'Enroll in a three-year diploma...', pathway: ['Diploma Holder', 'Junior Engineer', 'Assistant Engineer'], preferredSkills: ['Problem-Solving', 'Math'] }, 'Hotel Management': { salary: '₹2.5-6 LPA', howToJoin: 'Enroll in a 1-2 year diploma...', pathway: ['Trainee', 'Assistant', 'Supervisor'], preferredSkills: ['Communication', 'Service'] } /* More specializations... */ },
+                        commonSkills: ['Problem-Solving', 'Mathematics', 'Practical Skills', 'Communication']
+                    }
+                },
+                'after12th': {
+                    'Engineering (B.E./B.Tech)': {
+                        specializations: { 'Computer Science': { salary: '₹6-25 LPA', howToJoin: 'Qualify for JEE, specialize in CS...', pathway: ['Intern', 'Software Engineer', 'Senior Engineer'], preferredSkills: ['Programming', 'Data Analysis', 'AI/ML'] }, 'Mechanical Engineering': { salary: '₹4-15 LPA', howToJoin: 'Clear entrance exams, focus on design...', pathway: ['Trainee', 'Mechanical Engineer', 'Senior Engineer'], preferredSkills: ['Problem-Solving', 'Design'] } /* More... */ },
+                        commonSkills: ['Programming', 'Data Analysis', 'AI/ML', 'Cloud Computing', 'Leadership']
+                    },
+                    'Medical': {
+                        specializations: { 'MBBS (Medicine)': { salary: '₹8-30 LPA', howToJoin: 'Qualify for NEET-UG...', pathway: ['Intern', 'General Physician', 'Specialist'], preferredSkills: ['Science', 'Empathy'] } /* More... */ },
+                        commonSkills: ['Science', 'Empathy', 'Communication', 'Attention to Detail']
+                    },
+                    'Business & Management': {
+                        specializations: { 'BBA': { salary: '₹3.5-9 LPA', howToJoin: 'Join a BBA program after 12th...', pathway: ['Trainee', 'Executive', 'Manager'], preferredSkills: ['Leadership', 'Sales'] } /* More... */ },
+                        commonSkills: ['Leadership', 'Project Management', 'Sales', 'Finance', 'Marketing']
+                    }
+                }
+            };
+            
+            // --- Utility Functions ---
+            
+            /**
+             * Hides all main sections and the header.
+             */
+            function hideAllSections() {
+                Object.values(sections).forEach(section => section.classList.add('hidden'));
+            }
+
+            /**
+             * Shows a specific section by its key (e.g., 'education', 'degree').
+             * @param {string} sectionKey - The key of the section to show.
+             */
+            function showSection(sectionKey) {
+                hideAllSections();
+                sections.header.classList.toggle('hidden', sectionKey === 'about');
+                if (sections[sectionKey]) {
+                    sections[sectionKey].classList.remove('hidden');
+                }
+            }
+
+            /**
+             * Displays a pop-up message to the user.
+             * @param {string} message - The message to display.
+             * @param {string} [type='error'] - The type of message ('error' or 'info').
+             */
+            function showMessage(message, type = 'error') {
+                messageBox.textContent = message;
+                messageBox.className = `message-box ${type === 'error' ? 'bg-red-500' : 'bg-blue-500'} show`;
+                setTimeout(() => messageBox.classList.remove('show'), 3000);
+            }
+
+            // --- UI Population Functions ---
+
+            /**
+             * Creates and displays buttons for available degrees based on education level.
+             */
+            function populateDegreeButtons() {
+                containers.degreeButtons.innerHTML = '';
+                const degrees = Object.keys(mockData[careerPathType]);
+                degrees.forEach(degree => {
+                    const button = document.createElement('button');
+                    button.textContent = degree;
+                    button.className = "degree-card btn-blue-gradient py-3 px-8 rounded-full font-semibold";
+                    button.onclick = () => {
+                        selectedDegree = degree;
+                        populateSpecializationButtons();
+                        showSection('specialization');
+                    };
+                    containers.degreeButtons.appendChild(button);
+                });
+            }
+
+            /**
+             * Creates and displays buttons for specializations within a chosen degree.
+             */
+            function populateSpecializationButtons() {
+                containers.specializationButtons.innerHTML = '';
+                const specializations = Object.keys(mockData[careerPathType][selectedDegree].specializations);
+                specializations.forEach(spec => {
+                    const button = document.createElement('button');
+                    button.textContent = spec;
+                    button.className = "spec-card p-4 rounded-xl font-semibold border-2 border-transparent hover:bg-gray-200";
+                    button.onclick = () => {
+                        selectedSpecialization = spec;
+                        populateSkillsCheckboxes();
+                        showSection('input');
+                    };
+                    containers.specializationButtons.appendChild(button);
+                });
+            }
+            
+            /**
+             * Creates and displays skill checkboxes for the user to select.
+             */
+            function populateSkillsCheckboxes() {
+                containers.skills.innerHTML = '';
+                const commonSkills = mockData[careerPathType][selectedDegree].commonSkills;
+                commonSkills.forEach(skill => {
+                    containers.skills.innerHTML += `
+                        <label class="flex items-center text-gray-600 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+                            <input type="checkbox" name="skills" value="${skill}" class="rounded text-blue-600 h-5 w-5">
+                            <span class="ml-3 text-md">${skill}</span>
+                        </label>`;
+                });
+            }
+
+            /**
+             * Generates and displays career recommendation cards based on selected skills.
+             * @param {string[]} selectedSkills - An array of skills selected by the user.
+             */
+            function populateResults(selectedSkills) {
+                containers.careerPathCards.innerHTML = '';
+                const availableSpecs = mockData[careerPathType][selectedDegree].specializations;
+                
+                // Filter specializations that match at least one selected skill.
+                let recommended = Object.keys(availableSpecs).filter(spec => 
+                    selectedSkills.some(skill => availableSpecs[spec].preferredSkills.includes(skill))
+                );
+
+                // If no skills match, or too few recommendations, show the default top options.
+                if (recommended.length < 2) {
+                    recommended = Object.keys(availableSpecs).slice(0, 4);
+                }
+
+                recommended.forEach(spec => {
+                    const jobData = availableSpecs[spec];
+                    const card = document.createElement('div');
+                    card.className = "job-card bg-white p-6 rounded-xl shadow-md border";
+                    card.innerHTML = `<h4 class="text-xl font-bold">${spec}</h4><p class="text-md text-gray-500 mt-1">${jobData.salary}</p>`;
+                    card.onclick = () => showJobDetails(spec);
+                    containers.careerPathCards.appendChild(card);
+                });
+            }
+
+            /**
+             * Displays the detailed view for a specific job/specialization.
+             * @param {string} specialization - The key of the specialization to display.
+             */
+            function showJobDetails(specialization) {
+                const jobData = mockData[careerPathType][selectedDegree].specializations[specialization];
+                if (!jobData) return showMessage('Job details not found.');
+
+                detailedView.title.textContent = `${specialization} - ${selectedDegree}`;
+                detailedView.salary.textContent = jobData.salary;
+                detailedView.howToJoin.textContent = jobData.howToJoin;
+                
+                // Populate career pathway
+                detailedView.pathway.innerHTML = jobData.pathway.map((step, i) => `
+                    <div class="flex items-center text-center flex-1">
+                        <div>
+                            <span class="inline-flex items-center justify-center p-3 text-white bg-blue-600 rounded-full font-bold shadow-lg">${i + 1}</span>
+                            <p class="mt-2 font-semibold">${step}</p>
+                        </div>
+                        ${i < jobData.pathway.length - 1 ? '<div class="hidden md:block w-full h-1 bg-blue-200 flex-1 mx-4"></div>' : ''}
+                    </div>
+                `).join('');
+
+                // Populate preferred skills
+                detailedView.skills.innerHTML = jobData.preferredSkills.map(skill => `<li>${skill}</li>`).join('');
+                
+                showSection('detailed');
+            }
+
+            // --- Event Listeners ---
+            
+            buttons.home.onclick = () => showSection('education');
+            buttons.about.onclick = () => showSection('about');
+            buttons.aboutBack.onclick = () => showSection('education');
+            buttons.specBack.onclick = () => showSection('degree');
+            buttons.skillsBack.onclick = () => showSection('specialization');
+            buttons.backToSummary.onclick = () => showSection('summary');
+            buttons.startOver.onclick = () => {
+                // Reset state variables and UI
+                careerPathType = '';
+                selectedDegree = '';
+                selectedSpecialization = '';
+                showSection('education');
+            };
+
+            // Handle education level selection
+            buttons.education.forEach(button => {
+                button.onclick = () => {
+                    careerPathType = button.dataset.education;
+                    populateDegreeButtons();
+                    showSection('degree');
+                };
+            });
+            
+            // Handle "Get Recommendations" button click
+            buttons.getRecommendations.onclick = () => {
+                const selectedSkills = Array.from(document.querySelectorAll('input[name="skills"]:checked')).map(cb => cb.value);
+                
+                if (selectedSkills.length === 0) {
+                    return showMessage('Please select at least one skill to get started!');
+                }
+
+                showSection('loading');
+                // Simulate AI processing time
+                setTimeout(() => {
+                    populateResults(selectedSkills);
+                    showSection('summary');
+                }, 1500);
+            };
+
+            // --- Chatbot Logic ---
+            chatIcon.addEventListener('click', () => {
+                chatContainer.classList.toggle('show');
+                // Lazy-load the iframe only when it's first opened
+                if (!isChatbotLoaded) {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = "http://localhost:5678/webhook/3cc68d3c-dcfa-46df-80b8-1d6c7ab2de30/chat";
+                    chatContainer.appendChild(iframe);
+                    isChatbotLoaded = true;
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
+
+
+1
